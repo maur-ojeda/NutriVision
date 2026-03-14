@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import CameraCapture from '@/components/CameraCapture';
 import Preview from '@/components/Preview';
 import FAB from '@/components/FAB';
+import PWAInstallPrompt from '@/components/PWAInstallPrompt';
 import { LogOut, Calendar, TrendingUp, PieChart } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useMeals } from '@/hooks/useMeals';
@@ -425,6 +426,9 @@ export default function DashboardPage() {
 
       {/* Floating Action Button */}
       {!showCamera && !showPreview && <FAB onClick={handleOpenCamera} />}
+      
+      {/* PWA Install Prompt */}
+      <PWAInstallPrompt />
     </div>
   );
 }
