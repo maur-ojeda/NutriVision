@@ -9,4 +9,10 @@ export default defineConfig({
             '@': path.resolve(__dirname, './src'),
         },
     },
+    server: {
+        port: 3000,
+        strictPort: true,
+        // Asegurar que la URL base sea consistente para magic links
+        origin: 'http://localhost:3000',
+    },
 });

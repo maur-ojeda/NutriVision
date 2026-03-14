@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { getAppUrl, handleMagicLinkError } from './auth';
 
 // Get environment variables
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
@@ -14,5 +15,11 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: true,
+    // Las redirecciones se manejan automáticamente a la URL actual
   },
 });
+
+// Helper function para manejar errores de autenticación
+export function handleAuthError(error: any): string {
+  return handleMagicLinkError(error);
+}

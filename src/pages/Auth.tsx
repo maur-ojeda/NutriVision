@@ -1,18 +1,32 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { Mail, Loader2 } from 'lucide-react';
+import { Mail, Loader2, AlertCircle, Clock } from 'lucide-react';
+import { isExpiredLinkError, formatTimeRemaining } from '@/lib/auth';
 
 export default function AuthPage() {
   const { signIn, loading, error } = useAuth();
   const [email, setEmail] = useState('');
+  const [linkSentTime, setLinkSentTime] = useState<Date | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       await signIn(email);
+      setLinkSentTime(new Date());
     } catch (err) {
       // Error is already handled by useAuth hook
       console.error('Sign in error:', err);
+    }
+  };
+
+  // Limpiar el estado de error cuando el usuario empieza a escribir
+  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setEmail(e.target.value);
+    if (error) {
+      // No limpiar error si es de enlace expirado, ya que es informativo
+      if (!isExpiredLinkError(error)) {
+        // Podríamos limpiar el error aquí si queremos, pero mejor dejarlo para que el usuario vea
+      }
     }
   };
 
@@ -60,21 +74,41 @@ export default function AuthPage() {
             {/* Success/Error Messages */}
             {!loading && error && (
               <div className="bg-red-50 border border-red-200 rounded-lg p-4 space-y-2">
-                <p className="text-sm text-red-800">{error}</p>
+                <div className="flex items-center space-x-2">
+                  <AlertCircle className="h-4 w-4 text-red-600" />
+                  <p className="text-sm text-red-800 font-medium">{error}</p>
+                </div>
+                {/* Mensaje específico para enlaces expirados */}
+                {isExpiredLinkError(error) && (
+                  <div className="flex items-center space-x-2 text-xs text-red-600 mt-2">
+                    <Clock className="h-3 w-3" />
+                    <span>Los Magic Links expiran después de 1 hora. Por favor, solicita un nuevo enlace.</span>
+                  </div>
+                )}
               </div>
             )}
 
-            {!loading && !error && email && (
+            {/* Mensaje de éxito con información adicional */}
+            {!loading && !error && linkSentTime && (
               <div className="bg-green-50 border border-green-200 rounded-lg p-4 space-y-3">
                 <div className="flex items-center space-x-3 mb-2">
                   <Mail className="h-8 w-8 text-green-600" />
-                  <p className="text-sm text-green-800">
+                  <p className="text-sm text-green-800 font-medium">
                     Magic Link enviado!
                   </p>
                 </div>
-                <p className="text-sm text-green-700 leading-relaxed">
-                  Revisa tu email en 1 minuto y haz click en el link.
-                </p>
+                <div className="space-y-2">
+                  <p className="text-sm text-green-700">
+                    Revisa tu email en 1 minuto y haz click en el link.
+                  </p>
+                  <div className="flex items-center space-x-2 text-xs text-green-600 bg-green-100 rounded px-2 py-1">
+                    <Clock className="h-3 w-3" />
+                    <span>⏰ Los enlaces expiran después de 1 hora.</span>
+                  </div>
+                  <div className="text-xs text-green-600 bg-green-50 rounded px-2 py-1">
+                    💡 Revisa también tu carpeta de spam si no ves el email.
+                  </div>
+                </div>
               </div>
             )}
 
@@ -91,10 +125,15 @@ export default function AuthPage() {
           </form>
 
           {/* Instructions */}
-          <div className="mt-6 text-center text-sm text-gray-500">
+          <div className="mt-6 text-center text-xs text-gray-500 space-y-2">
             <p>
               <strong className="text-gray-700">¿No tienes acceso?</strong> El Magic Link expira en 1 hora.
             </p>
+            <div className="space-y-1">
+              <p>• Revisa tu carpeta de spam si no ves el email</p>
+              <p>• Asegúrate de usar el email correcto</p>
+              <p>• Solo necesitas hacer clic en el enlace una vez</p>
+            </div>
           </div>
         </div>
       </div>

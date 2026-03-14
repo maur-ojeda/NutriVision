@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
+import { supabase, handleAuthError } from '@/lib/supabase';
+import { isExpiredLinkError } from '@/lib/auth';
 import type { User, Session } from '@/lib/types';
 
 export function useAuth() {
@@ -10,7 +11,15 @@ export function useAuth() {
 
   useEffect(() => {
     // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(({ data: { session }, error }) => {
+      if (error) {
+        console.error('Error getting session:', error);
+        // No mostramos errores de enlace expirado aquí, ya que es normal cuando un usuario
+        // llega sin haber iniciado sesión correctamente
+        if (!isExpiredLinkError(error)) {
+          setError(handleAuthError(error));
+        }
+      }
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
@@ -19,8 +28,21 @@ export function useAuth() {
     // Listen for auth changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      console.log('Auth state changed:', _event, session);
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log('Auth state changed:', event, session);
+      
+      if (event === 'SIGNED_IN') {
+        setSession(session);
+        setUser(session?.user ?? null);
+        // Limpiar cualquier error previo al inicio de sesión exitoso
+        setError(null);
+        setLoading(false);
+      } else if (event === 'SIGNED_OUT') {
+        setSession(null);
+        setUser(null);
+        setLoading(false);
+      }
+      // Para otros eventos, actualizamos la sesión
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
@@ -41,14 +63,17 @@ export function useAuth() {
       });
 
       if (error) {
-        setError(error.message);
+        // Usar nuestro manejador de errores para mensajes más amigables
+        const errorMessage = handleAuthError(error);
+        setError(errorMessage);
         throw error;
       }
 
       // Success - show message that user should check their email
       setError('Magic Link enviado! Revisa tu email en 1 minuto y haz click en el link.');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error al enviar Magic Link');
+      const errorMessage = handleAuthError(err);
+      setError(errorMessage);
       throw err;
     } finally {
       setLoading(false);
