@@ -1,73 +1,122 @@
-# React + TypeScript + Vite
+<div align="center">
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+# NutriVision
 
-Currently, two official plugins are available:
+**AI-Powered Nutrition Tracking PWA**
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+![React](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)
+![Supabase](https://img.shields.io/badge/Supabase-3FCF8E?logo=supabase&logoColor=white)
+![PWA](https://img.shields.io/badge/PWA-ready-5A0FC8?logo=pwa&logoColor=white)
+![Status](https://img.shields.io/badge/status-in_development-yellow)
 
-## React Compiler
+Snap a photo. Track your nutrition. That simple.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+<!-- Uncomment when you have a screenshot:
+![NutriVision Screenshot](./docs/screenshot.png)
+-->
 
-## Expanding the ESLint configuration
+</div>
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+---
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+## Tech Stack
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+![Vite](https://img.shields.io/badge/Vite-646CFF?logo=vite&logoColor=white)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-06B6D4?logo=tailwindcss&logoColor=white)
+![Gemini](https://img.shields.io/badge/Gemini_1.5_Flash-AI-4285F4?logo=google&logoColor=white)
+![Lucide](https://img.shields.io/badge/Lucide-Icons-FF6F61)
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+| Layer | Tech | Notes |
+|-------|------|-------|
+| Frontend | React + Vite + Tailwind CSS | Mobile-first PWA |
+| PWA | vite-plugin-pwa + Workbox | Offline support, installable |
+| Backend/BaaS | Supabase | Auth, PostgreSQL, Storage |
+| AI Vision | Gemini 1.5 Flash API | Fast, low-cost food analysis |
+| Icons | Lucide-react | Clean icon set |
+
+## Features
+
+- **AI Photo Analysis** — Snap a photo of your meal → get instant calorie and macro breakdown
+- **Smart Dashboard** — Weekly tracking with progress charts vs daily goals
+- **Offline Mode** — PWA with service workers for use without internet
+- **Camera Integration** — Native camera capture or file upload
+- **Confirmation Flow** — AI results shown as a review card before saving
+
+## How It Works
+
+```mermaid
+flowchart LR
+    A["📷 Snap Photo"] --> B["🤖 Gemini 1.5 Flash"]
+    B --> C["📊 Nutrition Card"]
+    C --> D{Confirm?}
+    D -->|Yes| E["💾 Save to Supabase"]
+    D -->|No| A
+    E --> F["📈 Dashboard"]
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Data Model
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```mermaid
+erDiagram
+    auth_users ||--o{ meals : "has"
+    meals {
+        uuid id PK
+        uuid user_id FK
+        text image_url
+        text food_name
+        integer calories
+        jsonb macros
+        timestamp created_at
+    }
+    auth_users {
+        uuid id PK
+        text email
+    }
+    macros {
+        float protein
+        float carbs
+        float fat
+    }
+    meals }o--o| macros : "stores as JSONB"
 ```
+
+## Setup
+
+```bash
+git clone https://github.com/maur-ojeda/NutriVision.git
+cd NutriVision
+npm install
+```
+
+Create a `.env` file (see `.env.example`):
+
+```env
+VITE_SUPABASE_URL=your_supabase_url
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+VITE_GEMINI_API_KEY=your_gemini_api_key
+```
+
+```bash
+npm run dev
+```
+
+> **Note:** You need a [Supabase](https://supabase.com) project and a [Google AI Studio](https://aistudio.google.com) API key. Never commit your `.env` file.
+
+## Architecture
+
+```
+React PWA (Vite + Tailwind)
+    ↓
+Supabase Client SDK
+    ├── Auth (Magic Link / Email)
+    ├── PostgreSQL (meals history)
+    └── Storage (food images)
+    ↓
+Gemini 1.5 Flash API (AI food analysis)
+    ↓ (returns JSON: food, calories, macros)
+```
+
+## License
+
+[MIT](./LICENSE)
