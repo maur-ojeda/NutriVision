@@ -21,6 +21,7 @@ dist-ssr
 # Supabase local development
 .supabase/
 .supabase-temp/
+supabase/.temp/
 
 # Test coverage
 coverage/
@@ -38,3 +39,7 @@ coverage/
 *.sw?
 .vercel
 .env*.local
+
+# Claude Code / tooling artifacts
+.atl/
+.playwright-mcp/
