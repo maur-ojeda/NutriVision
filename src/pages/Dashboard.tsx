@@ -14,7 +14,7 @@ type DateFilter = '7days' | 'today' | 'all';
 
 export default function DashboardPage() {
   const { user, signOut } = useAuth();
-  const { meals, loading, error } = useMeals(user);
+  const { meals, loading, error, refetch } = useMeals(user);
   const [showCamera, setShowCamera] = useState(false);
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [showPreview, setShowPreview] = useState(false);
@@ -43,11 +43,9 @@ export default function DashboardPage() {
     setCameraError(error);
   };
 
-  const handleAnalyze = () => {
-    // TODO: Integrate with Edge Function in Phase 5
-    console.log('Analyzing image:', capturedImage);
-    alert('Análisis con IA se implementará en Phase 5');
+  const handleMealSaved = () => {
     handleClosePreview();
+    refetch();
   };
 
   const handleRetake = () => {
@@ -203,7 +201,7 @@ export default function DashboardPage() {
           <>
             <Preview
               imageUrl={capturedImage}
-              onConfirm={handleAnalyze}
+              onConfirm={handleMealSaved}
               onRetake={handleRetake}
             />
             <div className="flex justify-center mt-4">
