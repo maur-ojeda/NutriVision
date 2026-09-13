@@ -25,6 +25,12 @@ export const handleMagicLinkError = (error: any): string => {
     return 'Ocurrió un error desconocido.';
   }
   
+  // Detectar específicamente errores de rate limit
+  const errorMessage = error?.message || error?.toString() || '';
+  if (errorMessage.includes('rate limit') || errorMessage.includes('rate_limit') || errorMessage.includes('exceeded')) {
+    return 'Has excedido el límite de solicitudes permitido. Por razones de seguridad, debes esperar antes de intentar nuevamente.';
+  }
+  
   // Errores específicos de Supabase Auth
   switch (error.code) {
     case 'otp_expired':
@@ -55,6 +61,17 @@ export const isExpiredLinkError = (error: any): boolean => {
          error?.code === 'token_expired' ||
          error?.message?.includes('expired') ||
          error?.message?.includes('expirado');
+};
+
+// Validar si un error es de rate limit
+export const isRateLimitError = (error: any): boolean => {
+  if (!error) return false;
+  
+  const errorMessage = error?.message || error?.toString() || '';
+  return errorMessage.includes('rate limit') || 
+         errorMessage.includes('rate_limit') ||
+         errorMessage.includes('exceeded') ||
+         errorMessage.includes('email rate limit');
 };
 
 // Formatear tiempo restante para mostrar al usuario
