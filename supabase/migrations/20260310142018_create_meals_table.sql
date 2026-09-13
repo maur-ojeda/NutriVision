@@ -1,5 +1,5 @@
 -- ============================================
--- NutriVision PWA - Meals Table Migration (Simplified)
+-- NutriVision PWA - Meals Table Migration
 -- ============================================
 
 -- Enable UUID extension
@@ -33,31 +33,31 @@ CREATE TABLE IF NOT EXISTS public.meals (
 ALTER TABLE public.meals ENABLE ROW LEVEL SECURITY;
 
 -- Policies for RLS
-DROP POLICY IF EXISTS "Users can view own meals";
+DROP POLICY IF EXISTS "Users can view own meals" ON public.meals;
 CREATE POLICY "Users can view own meals"
 ON public.meals
 FOR SELECT
 USING (auth.uid() = user_id);
 
-DROP POLICY IF EXISTS "Users can insert own meals";
+DROP POLICY IF EXISTS "Users can insert own meals" ON public.meals;
 CREATE POLICY "Users can insert own meals"
 ON public.meals
 FOR INSERT
 WITH CHECK (auth.uid() = user_id);
 
-DROP POLICY IF EXISTS "Users can update own meals";
+DROP POLICY IF EXISTS "Users can update own meals" ON public.meals;
 CREATE POLICY "Users can update own meals"
 ON public.meals
 FOR UPDATE
 USING (auth.uid() = user_id)
 WITH CHECK (auth.uid() = user_id);
 
-DROP POLICY IF EXISTS "Users can delete own meals";
+DROP POLICY IF EXISTS "Users can delete own meals" ON public.meals;
 CREATE POLICY "Users can delete own meals"
 ON public.meals
 FOR DELETE
 USING (auth.uid() = user_id);
 
 -- Indexes for performance
-CREATE INDEX meals_user_id_idx ON public.meals(user_id);
-CREATE INDEX meals_created_at_idx ON public.meals(created_at DESC);
+CREATE INDEX IF NOT EXISTS meals_user_id_idx ON public.meals(user_id);
+CREATE INDEX IF NOT EXISTS meals_created_at_idx ON public.meals(created_at DESC);
