@@ -2,6 +2,7 @@ import { useRef, useCallback, useState } from 'react';
 import Webcam from 'react-webcam';
 import { Camera as CameraIcon, RefreshCw, Upload } from 'lucide-react';
 import { useCamera } from '@/hooks/useCamera';
+import { optimizeImage } from '@/lib/imageOptimize';
 
 interface CameraCaptureProps {
   onCapture: (image: string) => void;
@@ -20,7 +21,7 @@ export default function CameraCapture({ onCapture, onError }: CameraCaptureProps
     height: 720,
   };
 
-  const handleCapture = useCallback(() => {
+  const handleCapture = useCallback(async () => {
     if (!webcamRef.current) {
       const errorMsg = 'La cámara no está iniciada';
       if (onError) onError(errorMsg);
@@ -28,11 +29,17 @@ export default function CameraCapture({ onCapture, onError }: CameraCaptureProps
     }
 
     const imageSrc = webcamRef.current.getScreenshot();
-    if (imageSrc) {
-      onCapture(imageSrc);
-    } else {
+    if (!imageSrc) {
       const errorMsg = 'Error al capturar la imagen';
       if (onError) onError(errorMsg);
+      return;
+    }
+
+    try {
+      const optimized = await optimizeImage(imageSrc);
+      onCapture(optimized);
+    } catch (err) {
+      if (onError) onError(err instanceof Error ? err.message : 'Error al optimizar la imagen');
     }
   }, [onCapture, onError]);
 
@@ -64,10 +71,16 @@ export default function CameraCapture({ onCapture, onError }: CameraCaptureProps
     if (!file) return;
 
     const base64 = await handleFileUpload(file);
-    if (base64) {
-      onCapture(base64);
-    } else if (onError) {
-      onError('Error al procesar la imagen seleccionada');
+    if (!base64) {
+      if (onError) onError('Error al procesar la imagen seleccionada');
+      return;
+    }
+
+    try {
+      const optimized = await optimizeImage(base64);
+      onCapture(optimized);
+    } catch (err) {
+      if (onError) onError(err instanceof Error ? err.message : 'Error al optimizar la imagen');
     }
   }, [handleFileUpload, onCapture, onError]);
 
