@@ -1,48 +1,15 @@
 import { useAuth } from '@/hooks/useAuth';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import AuthPage from './Auth';
 import Dashboard from './Dashboard';
-import AuthCallback from '@/components/AuthCallback';
 import { Loader2, TestTube } from 'lucide-react';
 
 export default function HomePage() {
   const { user, session, loading } = useAuth();
-  const [showCallback, setShowCallback] = useState(false);
   const [bypassAuth, setBypassAuth] = useState(false);
-
-  useEffect(() => {
-    console.log('HomePage: Detectando parámetros de URL...');
-    
-    // Detectar si hay parámetros de autenticación en la URL
-    const urlParams = new URLSearchParams(window.location.search);
-    const hashParams = new URLSearchParams(window.location.hash);
-    
-    // Buscar en ambos: search params y hash params (Supabase usa hash)
-    const accessToken = urlParams.get('access_token') || hashParams.get('access_token');
-    const refreshToken = urlParams.get('refresh_token') || hashParams.get('refresh_token');
-    const error = urlParams.get('error') || hashParams.get('error');
-    const type = urlParams.get('type') || hashParams.get('type'); // 'signup' o 'recovery'
-    
-    console.log('HomePage: Parámetros detectados:', { accessToken, refreshToken, error, type });
-    
-    // Si hay parámetros de autenticación o error, mostrar el callback
-    if (accessToken || refreshToken || error || type) {
-      console.log('HomePage: Mostrando AuthCallback');
-      setShowCallback(true);
-    } else {
-      console.log('HomePage: Sin parámetros de auth, vista normal');
-      setShowCallback(false);
-    }
-  }, []);
-
-  // Mostrar callback si hay parámetros de autenticación
-  if (showCallback) {
-    return <AuthCallback />;
-  }
 
   // Si bypass está activo, mostrar Dashboard directamente (solo en desarrollo)
   if (import.meta.env.DEV && bypassAuth) {
-    console.log('HomePage: Bypass de auth activado, mostrando Dashboard');
     return <Dashboard />;
   }
 
