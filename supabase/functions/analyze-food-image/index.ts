@@ -91,54 +91,58 @@ serve(async (req) => {
     return new Response('Failed to process image', { status: 500, headers: CORS_HEADERS });
   }
 
-  // 5. Call Gemini 1.5 Flash API
-  const geminiApiKey = Deno.env.get('GEMINI_API_KEY');
-  if (!geminiApiKey) {
-    console.error('Missing GEMINI_API_KEY environment variable');
+  // 5. Call NVIDIA Build API (llama-3.2-90b-vision-instruct)
+  const nvidiaApiKey = Deno.env.get('NVIDIA_API_KEY');
+  if (!nvidiaApiKey) {
+    console.error('Missing NVIDIA_API_KEY environment variable');
     return new Response('Server configuration error', { status: 500, headers: CORS_HEADERS });
   }
 
   const systemPrompt = `Actúa como un nutricionista experto en estimación visual. Analiza la imagen y devuelve un JSON con: nombre del plato, peso estimado en gramos, calorías, proteínas, carbohidratos y grasas. Si hay ingredientes invisibles (aceite, sal), estímalos según el brillo y tipo de cocción. Formato: {"food": string, "calories": number, "macros": {"protein": n, "carbs": n, "fat": n}}.`;
 
   try {
-    console.log('Calling Gemini API...');
-    const geminiResponse = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${geminiApiKey}`,
+    console.log('Calling NVIDIA Build API...');
+    const nvidiaResponse = await fetch(
+      'https://integrate.api.nvidia.com/v1/chat/completions',
       {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${nvidiaApiKey}`,
+        },
         body: JSON.stringify({
-          contents: [{
+          model: 'meta/llama-3.2-90b-vision-instruct',
+          messages: [{
             role: 'user',
-            parts: [
-              { text: systemPrompt },
+            content: [
+              { type: 'text', text: systemPrompt },
               {
-                inline_data: {
-                  mime_type: imageMimeType,
-                  data: imageBase64
-                }
+                type: 'image_url',
+                image_url: { url: `data:${imageMimeType};base64,${imageBase64}` }
               }
             ]
-          }]
+          }],
+          max_tokens: 512,
+          temperature: 0.2,
         })
       }
     );
 
-    const geminiData = await geminiResponse.json();
+    const nvidiaData = await nvidiaResponse.json();
 
-    if (geminiData.error) {
-      console.error('Gemini API error:', geminiData.error);
-      return new Response(`Gemini API error: ${geminiData.error.message}`, { status: 500, headers: CORS_HEADERS });
+    if (!nvidiaResponse.ok) {
+      console.error('NVIDIA API error:', nvidiaData);
+      return new Response(`NVIDIA API error: ${nvidiaData?.detail ?? nvidiaResponse.statusText}`, { status: 500, headers: CORS_HEADERS });
     }
 
     // 6. Parse JSON response
-    const responseText = geminiData.candidates?.[0]?.content?.parts?.[0]?.text;
+    const responseText = nvidiaData.choices?.[0]?.message?.content;
     if (!responseText) {
-      console.error('No response text from Gemini');
+      console.error('No response text from NVIDIA API');
       return new Response('Failed to analyze image', { status: 500, headers: CORS_HEADERS });
     }
 
-    // Extract JSON from response (Gemini might wrap it in markdown)
+    // Extract JSON from response (model might wrap it in markdown)
     const jsonMatch = responseText.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
       console.error('No JSON found in response:', responseText);
@@ -149,13 +153,13 @@ serve(async (req) => {
     try {
       parsed = JSON.parse(jsonMatch[0]);
     } catch (parseError) {
-      console.error('JSON.parse error on Gemini output:', parseError, jsonMatch[0]);
-      return new Response('Gemini devolvió un JSON inválido', { status: 502, headers: CORS_HEADERS });
+      console.error('JSON.parse error on NVIDIA output:', parseError, jsonMatch[0]);
+      return new Response('El modelo devolvió un JSON inválido', { status: 502, headers: CORS_HEADERS });
     }
 
     if (!isValidAnalysis(parsed)) {
-      console.error('Gemini output has unexpected shape:', parsed);
-      return new Response('Gemini devolvió una respuesta con formato inesperado', { status: 502, headers: CORS_HEADERS });
+      console.error('NVIDIA output has unexpected shape:', parsed);
+      return new Response('El modelo devolvió una respuesta con formato inesperado', { status: 502, headers: CORS_HEADERS });
     }
 
     const analysis: AnalysisResponse = parsed;
@@ -166,7 +170,7 @@ serve(async (req) => {
     });
 
   } catch (error) {
-    console.error('Gemini analysis error:', error);
+    console.error('NVIDIA analysis error:', error);
     return new Response('Failed to analyze image', { status: 500, headers: CORS_HEADERS });
   }
 });
