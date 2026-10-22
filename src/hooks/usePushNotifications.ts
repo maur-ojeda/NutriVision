@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { User } from '@supabase/supabase-js';
 
-const PUSH_SERVER = import.meta.env.VITE_PUSH_SERVER_URL || 'https://push.mojeda.site';
+const PUSH_SERVER = import.meta.env.VITE_PUSH_SERVER_URL || 'https://pushnutrivision.mojeda.site';
 const PUSH_SECRET = import.meta.env.VITE_PUSH_SECRET || '';
 
 function urlBase64ToUint8Array(base64String: string) {
