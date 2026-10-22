@@ -1,0 +1,14 @@
+{
+  "name": "nutrivision-push-server",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node --watch index.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.49.0",
+    "express": "^4.21.0",
+    "web-push": "^3.6.7"
+  }
+}
