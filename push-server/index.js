@@ -17,7 +17,7 @@ app.use((req, res, next) => {
 
 // VAPID setup
 webpush.setVapidDetails(
-  `mailto:${process.env.VAPID_EMAIL}`,
+  process.env.VAPID_SUBJECT,
   process.env.VAPID_PUBLIC_KEY,
   process.env.VAPID_PRIVATE_KEY
 );
